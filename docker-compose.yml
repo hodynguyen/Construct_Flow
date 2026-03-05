@@ -1,0 +1,188 @@
+version: "3.9"
+
+services:
+  # ── Infrastructure ────────────────────────────────────────────────────────
+
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: constructflow
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d constructflow"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672" # management UI: guest/guest
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Observability (optional — comment out if not needed) ──────────────────
+
+  elasticsearch:
+    image: elasticsearch:8.12.0
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"'"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  kibana:
+    image: kibana:8.12.0
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  apm-server:
+    image: elastic/apm-server:8.12.0
+    ports:
+      - "8200:8200"
+    command: >
+      apm-server -e
+        -E apm-server.rum.enabled=true
+        -E setup.kibana.host=kibana:5601
+        -E setup.template.settings.index.number_of_replicas=0
+        -E apm-server.kibana.enabled=true
+        -E apm-server.kibana.host=kibana:5601
+        -E output.elasticsearch.hosts=["elasticsearch:9200"]
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  # ── Application Services (uncomment when Dockerfiles are ready) ───────────
+
+  # user-service:
+  #   build:
+  #     context: .
+  #     dockerfile: apps/user-service/Dockerfile
+  #   ports:
+  #     - "50053:50053"
+  #   environment:
+  #     - DB_HOST=postgres
+  #     - DB_PORT=5432
+  #     - DB_NAME=constructflow
+  #     - DB_USER=admin
+  #     - DB_PASSWORD=secret
+  #     - GRPC_PORT=50053
+  #     - JWT_PRIVATE_KEY_PATH=/keys/private.pem
+  #     - ELASTIC_APM_SERVER_URL=http://apm-server:8200
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   volumes:
+  #     - ./keys:/keys:ro
+
+  # task-service:
+  #   build:
+  #     context: .
+  #     dockerfile: apps/task-service/Dockerfile
+  #   ports:
+  #     - "50051:50051"
+  #   environment:
+  #     - DB_HOST=postgres
+  #     - DB_PORT=5432
+  #     - DB_NAME=constructflow
+  #     - DB_USER=admin
+  #     - DB_PASSWORD=secret
+  #     - REDIS_ADDR=redis:6379
+  #     - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+  #     - GRPC_PORT=50051
+  #     - ELASTIC_APM_SERVER_URL=http://apm-server:8200
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
+
+  # notification-service:
+  #   build:
+  #     context: .
+  #     dockerfile: apps/notification-service/Dockerfile
+  #   ports:
+  #     - "50052:50052"
+  #   environment:
+  #     - DB_HOST=postgres
+  #     - DB_PORT=5432
+  #     - DB_NAME=constructflow
+  #     - DB_USER=admin
+  #     - DB_PASSWORD=secret
+  #     - REDIS_ADDR=redis:6379
+  #     - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+  #     - GRPC_PORT=50052
+  #     - ELASTIC_APM_SERVER_URL=http://apm-server:8200
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
+
+  # gateway:
+  #   build:
+  #     context: .
+  #     dockerfile: apps/gw-gateway/Dockerfile
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     - REDIS_ADDR=redis:6379
+  #     - TASK_SERVICE_ADDR=task-service:50051
+  #     - USER_SERVICE_ADDR=user-service:50053
+  #     - NOTIFICATION_SERVICE_ADDR=notification-service:50052
+  #     - JWT_PUBLIC_KEY_PATH=/keys/public.pem
+  #     - ELASTIC_APM_SERVER_URL=http://apm-server:8200
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
+  rabbitmq_data:
+  es_data:
