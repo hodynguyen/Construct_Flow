@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/gin-gonic/gin"
 	"github.com/hodynguyen/construct-flow/apps/gw-gateway/bootstrap"
+	gwhttp "github.com/hodynguyen/construct-flow/apps/gw-gateway/api/http"
+	userv1 "github.com/hodynguyen/construct-flow/gen/go/proto/user_service/v1"
 )
 
 func main() {
@@ -18,7 +19,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("connecting to redis: %v", err)
 	}
-	_ = redisClient
 
 	grpcClients, err := bootstrap.NewGRPCClients(cfg)
 	if err != nil {
@@ -26,12 +26,15 @@ func main() {
 	}
 	defer grpcClients.Close()
 
-	router := gin.Default()
-
-	// Routes will be registered here in Day 3
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok"})
+	router, err := gwhttp.NewRouter(gwhttp.RouterConfig{
+		UserClient:       userv1.NewUserServiceClient(grpcClients.UserServiceConn),
+		RedisClient:      redisClient,
+		RateLimitRPM:     cfg.RateLimitRequestsPerMinute,
+		JWTPublicKeyPath: cfg.JWTPublicKeyPath,
 	})
+	if err != nil {
+		log.Fatalf("building router: %v", err)
+	}
 
 	addr := fmt.Sprintf(":%d", cfg.HTTPPort)
 	log.Printf("gw-gateway HTTP listening on %s", addr)
