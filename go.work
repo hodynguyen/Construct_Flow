@@ -1,0 +1,8 @@
+go 1.25.0
+
+use (
+	./apps/gw-gateway
+	./apps/notification-service
+	./apps/task-service
+	./apps/user-service
+)

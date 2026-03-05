@@ -1,0 +1,66 @@
+# ── Personal / Planning files ────────────────────────────────────────────────
+CLAUDE.md
+PROJECT_PROPOSAL.md
+REVIEW_REPORT.md
+IMPLEMENTATION_PLAN.md
+*.pdf
+
+# ── Hody workflow state ───────────────────────────────────────────────────────
+.hody/
+
+# ── Go ────────────────────────────────────────────────────────────────────────
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Build output
+bin/
+dist/
+build/
+
+# Test cache / coverage
+*.test
+*.out
+coverage.html
+coverage.out
+coverage.txt
+
+# Go workspace local replace directives (auto-generated)
+go.work.sum
+
+# Vendor (not used — using modules)
+vendor/
+
+# ── Proto / code generation ───────────────────────────────────────────────────
+gen/
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+.docker/
+
+# ── Environment / Secrets ─────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+keys/
+
+# ── IDE / Editor ──────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*.DS_Store
+.direnv/
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Swagger generated ─────────────────────────────────────────────────────────
+apps/*/docs/
