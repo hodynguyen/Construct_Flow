@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/hodynguyen/construct-flow/apps/gw-gateway/bootstrap"
 	gwhttp "github.com/hodynguyen/construct-flow/apps/gw-gateway/api/http"
+	"github.com/hodynguyen/construct-flow/apps/gw-gateway/api/http/middleware"
+	"github.com/hodynguyen/construct-flow/apps/gw-gateway/bootstrap"
+	notifv1 "github.com/hodynguyen/construct-flow/gen/go/proto/notification_service/v1"
+	taskv1 "github.com/hodynguyen/construct-flow/gen/go/proto/task_service/v1"
 	userv1 "github.com/hodynguyen/construct-flow/gen/go/proto/user_service/v1"
 )
 
@@ -26,9 +29,17 @@ func main() {
 	}
 	defer grpcClients.Close()
 
+	enforcer, err := middleware.NewCasbinEnforcer(cfg.CasbinModelPath, cfg.CasbinPolicyPath)
+	if err != nil {
+		log.Fatalf("loading casbin enforcer: %v", err)
+	}
+
 	router, err := gwhttp.NewRouter(gwhttp.RouterConfig{
 		UserClient:       userv1.NewUserServiceClient(grpcClients.UserServiceConn),
+		TaskClient:       taskv1.NewTaskServiceClient(grpcClients.TaskServiceConn),
+		NotifClient:      notifv1.NewNotificationServiceClient(grpcClients.NotificationServiceConn),
 		RedisClient:      redisClient,
+		Enforcer:         enforcer,
 		RateLimitRPM:     cfg.RateLimitRequestsPerMinute,
 		JWTPublicKeyPath: cfg.JWTPublicKeyPath,
 	})

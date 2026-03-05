@@ -1,0 +1,28 @@
+# ConstructFlow RBAC Policy
+# Format: p, role, domain, resource, action
+# domain = company_id (enforced at runtime — wildcard * means any company)
+
+# ── Admin: full access ────────────────────────────────────────────────────────
+p, admin, *, /projects,       read
+p, admin, *, /projects,       write
+p, admin, *, /tasks,          read
+p, admin, *, /tasks,          write
+p, admin, *, /tasks/assign,   write
+p, admin, *, /tasks/status,   write
+p, admin, *, /notifications,  read
+p, admin, *, /notifications,  write
+
+# ── Manager: manage projects and tasks, assign tasks ─────────────────────────
+p, manager, *, /projects,      read
+p, manager, *, /projects,      write
+p, manager, *, /tasks,         read
+p, manager, *, /tasks,         write
+p, manager, *, /tasks/assign,  write
+p, manager, *, /tasks/status,  write
+p, manager, *, /notifications, read
+
+# ── Worker: read projects, read/update own tasks, no assignment ───────────────
+p, worker, *, /projects,       read
+p, worker, *, /tasks,          read
+p, worker, *, /tasks/status,   write
+p, worker, *, /notifications,  read
