@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package notification_service.v1;
+
+option go_package = "github.com/hodynguyen/construct-flow/gen/go/notification_service/v1;notification_servicev1";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+// ── Service ───────────────────────────────────────────────────────────────────
+
+service NotificationService {
+  rpc GetNotifications(GetNotificationsRequest) returns (NotificationsResponse);
+  rpc GetUnreadCount(GetUnreadCountRequest)     returns (UnreadCountResponse);
+  rpc MarkAsRead(MarkAsReadRequest)             returns (google.protobuf.Empty);
+  rpc MarkAllAsRead(MarkAllAsReadRequest)       returns (google.protobuf.Empty);
+}
+
+// ── Domain model ──────────────────────────────────────────────────────────────
+
+message Notification {
+  string id         = 1;
+  string user_id    = 2;
+  string company_id = 3;
+  string type       = 4;    // task_assigned | status_changed
+  string title      = 5;
+  string message    = 6;
+  bool   is_read    = 7;
+  string metadata   = 8;    // JSON string: {task_id, project_id, old_status, new_status, ...}
+  google.protobuf.Timestamp created_at = 9;
+}
+
+// ── Requests / Responses ──────────────────────────────────────────────────────
+
+message GetNotificationsRequest {
+  string user_id     = 1;
+  string company_id  = 2;
+  bool   unread_only = 3;
+  int32  page        = 4;
+  int32  page_size   = 5;
+}
+
+message NotificationsResponse {
+  repeated Notification notifications = 1;
+  int32 total     = 2;
+  int32 page      = 3;
+  int32 page_size = 4;
+}
+
+message GetUnreadCountRequest {
+  string user_id    = 1;
+  string company_id = 2;
+}
+
+message UnreadCountResponse {
+  int32 count = 1;
+}
+
+message MarkAsReadRequest {
+  string notification_id = 1;
+  string user_id         = 2;
+  string company_id      = 3;
+}
+
+message MarkAllAsReadRequest {
+  string user_id    = 1;
+  string company_id = 2;
+}

@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package user_service.v1;
+
+option go_package = "github.com/hodynguyen/construct-flow/gen/go/user_service/v1;user_servicev1";
+
+import "google/protobuf/timestamp.proto";
+
+// ── Service ───────────────────────────────────────────────────────────────────
+
+service UserService {
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc Login(LoginRequest)       returns (LoginResponse);
+  rpc GetUser(GetUserRequest)   returns (UserResponse);
+}
+
+// ── Domain model ──────────────────────────────────────────────────────────────
+
+message User {
+  string id         = 1;
+  string company_id = 2;
+  string email      = 3;
+  string name       = 4;
+  string role       = 5; // admin | manager | worker
+  google.protobuf.Timestamp created_at = 6;
+}
+
+// ── Requests / Responses ──────────────────────────────────────────────────────
+
+message RegisterRequest {
+  string email        = 1;
+  string name         = 2;
+  string password     = 3;
+  string role         = 4;        // admin | manager | worker
+  string company_id   = 5;        // join existing company (if non-empty)
+  string company_name = 6;        // create new company (if company_id is empty)
+}
+
+message RegisterResponse {
+  User   user       = 1;
+  string company_id = 2;
+}
+
+message LoginRequest {
+  string email    = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string access_token = 1; // RS256 signed JWT
+  User   user         = 2;
+}
+
+message GetUserRequest {
+  string company_id = 1;
+  string id         = 2;
+}
+
+message UserResponse {
+  User user = 1;
+}

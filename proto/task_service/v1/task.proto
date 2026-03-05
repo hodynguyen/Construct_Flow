@@ -1,0 +1,174 @@
+syntax = "proto3";
+
+package task_service.v1;
+
+option go_package = "github.com/hodynguyen/construct-flow/gen/go/task_service/v1;task_servicev1";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+// ── Service ───────────────────────────────────────────────────────────────────
+
+service TaskService {
+  // Project operations
+  rpc CreateProject(CreateProjectRequest) returns (ProjectResponse);
+  rpc GetProject(GetProjectRequest)       returns (ProjectResponse);
+  rpc ListProjects(ListProjectsRequest)   returns (ListProjectsResponse);
+  rpc UpdateProject(UpdateProjectRequest) returns (ProjectResponse);
+  rpc DeleteProject(DeleteProjectRequest) returns (google.protobuf.Empty);
+
+  // Task operations
+  rpc CreateTask(CreateTaskRequest)           returns (TaskResponse);
+  rpc GetTask(GetTaskRequest)                 returns (TaskResponse);
+  rpc ListTasks(ListTasksRequest)             returns (ListTasksResponse);
+  rpc UpdateTask(UpdateTaskRequest)           returns (TaskResponse);
+  rpc DeleteTask(DeleteTaskRequest)           returns (google.protobuf.Empty);
+  rpc AssignTask(AssignTaskRequest)           returns (TaskResponse);
+  rpc UpdateTaskStatus(UpdateTaskStatusRequest) returns (TaskResponse);
+}
+
+// ── Domain models ─────────────────────────────────────────────────────────────
+
+message Project {
+  string id          = 1;
+  string company_id  = 2;
+  string name        = 3;
+  string description = 4;
+  string status      = 5; // active | completed | archived
+  string start_date  = 6; // YYYY-MM-DD
+  string end_date    = 7; // YYYY-MM-DD
+  string created_by  = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+message Task {
+  string id          = 1;
+  string project_id  = 2;
+  string company_id  = 3;
+  string title       = 4;
+  string description = 5;
+  string status      = 6;  // todo | in_progress | done | blocked
+  string priority    = 7;  // low | medium | high | critical
+  string assigned_to = 8;  // user_id, empty if unassigned
+  string created_by  = 9;
+  string due_date    = 10; // YYYY-MM-DD
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
+}
+
+// ── Project requests / responses ──────────────────────────────────────────────
+
+message CreateProjectRequest {
+  string company_id  = 1;
+  string created_by  = 2;
+  string name        = 3;
+  string description = 4;
+  string start_date  = 5;
+  string end_date    = 6;
+}
+
+message GetProjectRequest {
+  string company_id = 1;
+  string id         = 2;
+}
+
+message ListProjectsRequest {
+  string company_id = 1;
+  string status     = 2; // optional filter
+  int32  page       = 3;
+  int32  page_size  = 4;
+}
+
+message ListProjectsResponse {
+  repeated Project projects = 1;
+  int32 total      = 2;
+  int32 page       = 3;
+  int32 page_size  = 4;
+}
+
+message UpdateProjectRequest {
+  string company_id  = 1;
+  string id          = 2;
+  string name        = 3;
+  string description = 4;
+  string status      = 5;
+  string end_date    = 6;
+}
+
+message DeleteProjectRequest {
+  string company_id = 1;
+  string id         = 2;
+}
+
+message ProjectResponse {
+  Project project = 1;
+}
+
+// ── Task requests / responses ─────────────────────────────────────────────────
+
+message CreateTaskRequest {
+  string company_id  = 1;
+  string project_id  = 2;
+  string created_by  = 3;
+  string title       = 4;
+  string description = 5;
+  string priority    = 6;
+  string assigned_to = 7; // optional: assign on creation
+  string due_date    = 8;
+}
+
+message GetTaskRequest {
+  string company_id = 1;
+  string id         = 2;
+}
+
+message ListTasksRequest {
+  string company_id  = 1;
+  string project_id  = 2;
+  string status      = 3; // optional filter
+  string assigned_to = 4; // optional filter
+  string priority    = 5; // optional filter
+  int32  page        = 6;
+  int32  page_size   = 7;
+}
+
+message ListTasksResponse {
+  repeated Task tasks = 1;
+  int32 total     = 2;
+  int32 page      = 3;
+  int32 page_size = 4;
+}
+
+message UpdateTaskRequest {
+  string company_id  = 1;
+  string id          = 2;
+  string title       = 3;
+  string description = 4;
+  string priority    = 5;
+  string due_date    = 6;
+}
+
+message DeleteTaskRequest {
+  string company_id = 1;
+  string id         = 2;
+}
+
+message AssignTaskRequest {
+  string company_id  = 1;
+  string task_id     = 2;
+  string assigned_to = 3; // user_id of the assignee
+  string assigned_by = 4; // user_id of the manager performing the action
+}
+
+message UpdateTaskStatusRequest {
+  string company_id  = 1;
+  string task_id     = 2;
+  string new_status  = 3; // todo | in_progress | done | blocked
+  string changed_by  = 4;
+  string role        = 5; // needed to validate done→in_progress (manager only)
+}
+
+message TaskResponse {
+  Task task = 1;
+}
