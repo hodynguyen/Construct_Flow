@@ -1,5 +1,1 @@
 version: v1
-modules:
-  - directory: proto/task_service/v1
-  - directory: proto/user_service/v1
-  - directory: proto/notification_service/v1
