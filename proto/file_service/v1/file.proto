@@ -1,0 +1,103 @@
+syntax = "proto3";
+
+package file_service.v1;
+
+option go_package = "github.com/hodynguyen/construct-flow/gen/go/file_service/v1;file_servicev1";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+service FileService {
+  rpc PresignUpload(PresignUploadRequest)       returns (PresignUploadResponse);
+  rpc ConfirmUpload(ConfirmUploadRequest)       returns (FileResponse);
+  rpc GetDownloadURL(GetDownloadURLRequest)     returns (GetDownloadURLResponse);
+  rpc ListFiles(ListFilesRequest)               returns (ListFilesResponse);
+  rpc DeleteFile(DeleteFileRequest)             returns (google.protobuf.Empty);
+  rpc MigrateStorage(MigrateStorageRequest)    returns (MigrateStorageResponse);
+}
+
+// ── Domain model ──────────────────────────────────────────────────────────────
+
+message File {
+  string id           = 1;
+  string company_id   = 2;
+  string project_id   = 3;  // optional
+  string task_id      = 4;  // optional
+  string uploaded_by  = 5;
+  string name         = 6;
+  string mime_type    = 7;
+  int64  size_bytes   = 8;
+  string storage_tier = 9;  // standard | standard_ia | glacier
+  string status       = 10; // pending | active | deleted
+  google.protobuf.Timestamp created_at = 11;
+}
+
+// ── Requests / Responses ──────────────────────────────────────────────────────
+
+message PresignUploadRequest {
+  string company_id  = 1;
+  string uploaded_by = 2;
+  string name        = 3;
+  string mime_type   = 4;
+  int64  size_bytes  = 5;
+  string project_id  = 6; // optional
+  string task_id     = 7; // optional
+}
+
+message PresignUploadResponse {
+  string file_id    = 1;
+  string upload_url = 2; // presigned PUT URL, 15-min TTL
+  string s3_key     = 3;
+}
+
+message ConfirmUploadRequest {
+  string company_id = 1;
+  string file_id    = 2;
+  int64  size_bytes = 3; // actual size after upload
+}
+
+message FileResponse {
+  File file = 1;
+}
+
+message GetDownloadURLRequest {
+  string company_id = 1;
+  string file_id    = 2;
+}
+
+message GetDownloadURLResponse {
+  string download_url  = 1; // presigned GET URL, 15-min TTL
+  string storage_tier  = 2; // so client knows if restore is needed
+  bool   requires_restore = 3; // true if file is in Glacier
+}
+
+message ListFilesRequest {
+  string company_id  = 1;
+  string project_id  = 2; // optional filter
+  string task_id     = 3; // optional filter
+  int32  page        = 4;
+  int32  page_size   = 5;
+}
+
+message ListFilesResponse {
+  repeated File files = 1;
+  int32 total    = 2;
+  int32 page     = 3;
+  int32 page_size = 4;
+}
+
+message DeleteFileRequest {
+  string company_id = 1;
+  string file_id    = 2;
+  string deleted_by = 3;
+}
+
+message MigrateStorageRequest {
+  string company_id   = 1;
+  string project_id   = 2;
+  string target_tier  = 3; // standard_ia | glacier
+}
+
+message MigrateStorageResponse {
+  int32 migrated_count = 1;
+}

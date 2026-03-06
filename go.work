@@ -5,5 +5,7 @@ use (
 	./apps/notification-service
 	./apps/task-service
 	./apps/user-service
+	./apps/file-service
+	./apps/report-service
 	./gen/go
 )

@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package report_service.v1;
+
+option go_package = "github.com/hodynguyen/construct-flow/gen/go/report_service/v1;report_servicev1";
+
+import "google/protobuf/timestamp.proto";
+
+service ReportService {
+  rpc RequestReport(RequestReportRequest)     returns (RequestReportResponse);
+  rpc GetReportStatus(GetReportStatusRequest) returns (ReportJob);
+  rpc ListReports(ListReportsRequest)         returns (ListReportsResponse);
+}
+
+// ── Domain model ──────────────────────────────────────────────────────────────
+
+message ReportJob {
+  string id           = 1;
+  string company_id   = 2;
+  string requested_by = 3;
+  string type         = 4;  // weekly_progress | monthly_summary | task_overdue
+  string params       = 5;  // JSON: { project_id, week, ... }
+  string status       = 6;  // queued | processing | ready | failed
+  string download_url = 7;  // set when status=ready
+  string error_msg    = 8;  // set when status=failed
+  google.protobuf.Timestamp created_at   = 9;
+  google.protobuf.Timestamp completed_at = 10;
+}
+
+// ── Requests / Responses ──────────────────────────────────────────────────────
+
+message RequestReportRequest {
+  string company_id   = 1;
+  string requested_by = 2;
+  string type         = 3; // weekly_progress | monthly_summary | task_overdue
+  string project_id   = 4; // optional
+  string week         = 5; // optional, e.g. "2026-W10"
+}
+
+message RequestReportResponse {
+  string job_id  = 1;
+  string status  = 2; // always "queued"
+}
+
+message GetReportStatusRequest {
+  string company_id = 1;
+  string job_id     = 2;
+}
+
+message ListReportsRequest {
+  string company_id   = 1;
+  string requested_by = 2; // optional filter
+  string status       = 3; // optional filter
+  int32  page         = 4;
+  int32  page_size    = 5;
+}
+
+message ListReportsResponse {
+  repeated ReportJob reports = 1;
+  int32 total     = 2;
+  int32 page      = 3;
+  int32 page_size = 4;
+}
