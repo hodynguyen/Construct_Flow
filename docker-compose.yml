@@ -93,93 +93,112 @@ services:
       elasticsearch:
         condition: service_healthy
 
-  # ── Application Services (uncomment when Dockerfiles are ready) ───────────
+  # ── Application Services ──────────────────────────────────────────────────
 
-  # user-service:
-  #   build:
-  #     context: .
-  #     dockerfile: apps/user-service/Dockerfile
-  #   ports:
-  #     - "50053:50053"
-  #   environment:
-  #     - DB_HOST=postgres
-  #     - DB_PORT=5432
-  #     - DB_NAME=constructflow
-  #     - DB_USER=admin
-  #     - DB_PASSWORD=secret
-  #     - GRPC_PORT=50053
-  #     - JWT_PRIVATE_KEY_PATH=/keys/private.pem
-  #     - ELASTIC_APM_SERVER_URL=http://apm-server:8200
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   volumes:
-  #     - ./keys:/keys:ro
+  user-service:
+    build:
+      context: .
+      dockerfile: apps/user-service/Dockerfile
+    ports:
+      - "50053:50053"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=constructflow
+      - DB_USER=admin
+      - DB_PASSWORD=secret
+      - GRPC_PORT=50053
+      - JWT_PRIVATE_KEY_PATH=/keys/private.pem
+      - JWT_PUBLIC_KEY_PATH=/keys/public.pem
+      - ELASTIC_APM_SERVER_URL=http://apm-server:8200
+      - ELASTIC_APM_SERVICE_NAME=user-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./keys:/keys:ro
+    restart: unless-stopped
 
-  # task-service:
-  #   build:
-  #     context: .
-  #     dockerfile: apps/task-service/Dockerfile
-  #   ports:
-  #     - "50051:50051"
-  #   environment:
-  #     - DB_HOST=postgres
-  #     - DB_PORT=5432
-  #     - DB_NAME=constructflow
-  #     - DB_USER=admin
-  #     - DB_PASSWORD=secret
-  #     - REDIS_ADDR=redis:6379
-  #     - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
-  #     - GRPC_PORT=50051
-  #     - ELASTIC_APM_SERVER_URL=http://apm-server:8200
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #     rabbitmq:
-  #       condition: service_healthy
+  task-service:
+    build:
+      context: .
+      dockerfile: apps/task-service/Dockerfile
+    ports:
+      - "50051:50051"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=constructflow
+      - DB_USER=admin
+      - DB_PASSWORD=secret
+      - REDIS_ADDR=redis:6379
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - GRPC_PORT=50051
+      - ELASTIC_APM_SERVER_URL=http://apm-server:8200
+      - ELASTIC_APM_SERVICE_NAME=task-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
 
-  # notification-service:
-  #   build:
-  #     context: .
-  #     dockerfile: apps/notification-service/Dockerfile
-  #   ports:
-  #     - "50052:50052"
-  #   environment:
-  #     - DB_HOST=postgres
-  #     - DB_PORT=5432
-  #     - DB_NAME=constructflow
-  #     - DB_USER=admin
-  #     - DB_PASSWORD=secret
-  #     - REDIS_ADDR=redis:6379
-  #     - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
-  #     - GRPC_PORT=50052
-  #     - ELASTIC_APM_SERVER_URL=http://apm-server:8200
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #     rabbitmq:
-  #       condition: service_healthy
+  notification-service:
+    build:
+      context: .
+      dockerfile: apps/notification-service/Dockerfile
+    ports:
+      - "50052:50052"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=constructflow
+      - DB_USER=admin
+      - DB_PASSWORD=secret
+      - REDIS_ADDR=redis:6379
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - GRPC_PORT=50052
+      - ELASTIC_APM_SERVER_URL=http://apm-server:8200
+      - ELASTIC_APM_SERVICE_NAME=notification-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
 
-  # gateway:
-  #   build:
-  #     context: .
-  #     dockerfile: apps/gw-gateway/Dockerfile
-  #   ports:
-  #     - "8080:8080"
-  #   environment:
-  #     - REDIS_ADDR=redis:6379
-  #     - TASK_SERVICE_ADDR=task-service:50051
-  #     - USER_SERVICE_ADDR=user-service:50053
-  #     - NOTIFICATION_SERVICE_ADDR=notification-service:50052
-  #     - JWT_PUBLIC_KEY_PATH=/keys/public.pem
-  #     - ELASTIC_APM_SERVER_URL=http://apm-server:8200
-  #   depends_on:
-  #     redis:
-  #       condition: service_healthy
+  gateway:
+    build:
+      context: .
+      dockerfile: apps/gw-gateway/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - REDIS_ADDR=redis:6379
+      - TASK_SERVICE_ADDR=task-service:50051
+      - USER_SERVICE_ADDR=user-service:50053
+      - NOTIFICATION_SERVICE_ADDR=notification-service:50052
+      - JWT_PUBLIC_KEY_PATH=/keys/public.pem
+      - CASBIN_MODEL_PATH=/casbin/model.conf
+      - CASBIN_POLICY_PATH=/casbin/policy.csv
+      - ELASTIC_APM_SERVER_URL=http://apm-server:8200
+      - ELASTIC_APM_SERVICE_NAME=gw-gateway
+    depends_on:
+      redis:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+      task-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
+    volumes:
+      - ./keys:/keys:ro
+    restart: unless-stopped
 
 volumes:
   postgres_data:

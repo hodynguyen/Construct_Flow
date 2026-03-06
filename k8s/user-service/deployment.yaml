@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: constructflow
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+        - name: user-service
+          image: constructflow/user-service:latest
+          ports:
+            - containerPort: 50053
+          env:
+            - name: DB_HOST
+              value: "postgres"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              value: "constructflow"
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: password
+            - name: GRPC_PORT
+              value: "50053"
+            - name: JWT_PRIVATE_KEY_PATH
+              value: "/keys/private.pem"
+            - name: JWT_PUBLIC_KEY_PATH
+              value: "/keys/public.pem"
+            - name: ELASTIC_APM_SERVER_URL
+              value: "http://apm-server:8200"
+            - name: ELASTIC_APM_SERVICE_NAME
+              value: "user-service"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          volumeMounts:
+            - name: jwt-keys
+              mountPath: /keys
+              readOnly: true
+      volumes:
+        - name: jwt-keys
+          secret:
+            secretName: jwt-keys

@@ -1,0 +1,15 @@
+FROM golang:1.23-alpine AS builder
+WORKDIR /app
+
+COPY go.work go.work.sum ./
+COPY gen/go/ gen/go/
+COPY apps/user-service/ apps/user-service/
+
+WORKDIR /app/apps/user-service
+RUN go build -o /user-service .
+
+FROM alpine:3.20
+RUN apk add --no-cache ca-certificates
+COPY --from=builder /user-service /user-service
+EXPOSE 50053
+ENTRYPOINT ["/user-service"]

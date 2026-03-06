@@ -1,0 +1,14 @@
+# Don't send large/unnecessary files to Docker daemon
+.git/
+.github/
+.hody/
+keys/
+*.log
+*.pdf
+implement.md
+PROJECT_PROPOSAL.md
+REVIEW_REPORT.md
+k8s/
+
+# Keep gen/ (proto stubs needed for build) — do NOT ignore it here
+# Keep go.work.sum — needed for workspace builds
