@@ -6,6 +6,7 @@ import (
 	"github.com/casbin/casbin/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
+	"go.elastic.co/apm/module/apmgin/v2"
 
 	"github.com/hodynguyen/construct-flow/apps/gw-gateway/api/http/handler"
 	"github.com/hodynguyen/construct-flow/apps/gw-gateway/api/http/middleware"
@@ -16,18 +17,19 @@ import (
 
 // RouterConfig holds all dependencies needed to register routes.
 type RouterConfig struct {
-	UserClient        userv1.UserServiceClient
-	TaskClient        taskv1.TaskServiceClient
-	NotifClient       notifv1.NotificationServiceClient
-	RedisClient       *redis.Client
-	Enforcer          *casbin.Enforcer
-	RateLimitRPM      int
-	JWTPublicKeyPath  string
+	UserClient       userv1.UserServiceClient
+	TaskClient       taskv1.TaskServiceClient
+	NotifClient      notifv1.NotificationServiceClient
+	RedisClient      *redis.Client
+	Enforcer         *casbin.Enforcer
+	RateLimitRPM     int
+	JWTPublicKeyPath string
 }
 
 // NewRouter builds and returns the configured Gin engine.
 func NewRouter(cfg RouterConfig) (*gin.Engine, error) {
 	r := gin.New()
+	r.Use(apmgin.Middleware(r))
 	r.Use(gin.Recovery())
 	r.Use(gin.Logger())
 	r.Use(middleware.RateLimitMiddleware(cfg.RedisClient, cfg.RateLimitRPM))

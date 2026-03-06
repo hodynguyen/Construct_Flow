@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"net"
 
+	"go.elastic.co/apm/module/apmgrpc/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
 func NewGRPCServer() *grpc.Server {
-	server := grpc.NewServer()
+	server := grpc.NewServer(
+		grpc.UnaryInterceptor(apmgrpc.NewUnaryServerInterceptor()),
+	)
 	reflection.Register(server)
 	return server
 }

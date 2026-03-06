@@ -7,6 +7,7 @@ import (
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
+	"go.elastic.co/apm/v2"
 	"go.uber.org/zap"
 
 	"github.com/hodynguyen/construct-flow/apps/notification-service/bootstrap"
@@ -61,6 +62,10 @@ func (c *TaskStatusChangedConsumer) Start(ctx context.Context) {
 }
 
 func (c *TaskStatusChangedConsumer) processMessage(ctx context.Context, msg amqp.Delivery) {
+	tx := apm.DefaultTracer().StartTransaction("task.status_changed consume", "messaging")
+	defer tx.End()
+	ctx = apm.ContextWithTransaction(ctx, tx)
+
 	var env eventEnvelope
 	if err := json.Unmarshal(msg.Body, &env); err != nil {
 		c.logger.Error("malformed message body", zap.Error(err))
