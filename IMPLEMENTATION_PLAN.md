@@ -487,37 +487,37 @@ UNIT TESTS (all in same afternoon):
 **Use case:** Worker upload ảnh công trình + blueprint CAD, attach vào task/project. S3 tiered storage tự động migrate cold data sang Glacier.
 
 ```
-[ ] proto/file_service/v1/file.proto
-    [ ] PresignUpload(PresignUploadRequest) → PresignUploadResponse { upload_url, file_id }
-    [ ] ConfirmUpload(ConfirmUploadRequest) → File
-    [ ] GetDownloadURL(GetDownloadURLRequest) → { download_url }
-    [ ] ListFiles(ListFilesRequest) → FilesResponse
-    [ ] DeleteFile(DeleteFileRequest) → Empty
-[ ] apps/file-service/bootstrap/ (config, DB, gRPC server)
-[ ] apps/file-service/entity/model/file.go
-    [ ] fields: id, company_id, project_id, task_id, uploaded_by
-    [ ] s3_key, s3_bucket, size_bytes, mime_type
-    [ ] storage_tier: standard | standard_ia | glacier
-    [ ] status: pending | active | deleted
-[ ] apps/file-service/domain/file_repository.go + storage_client.go
-[ ] apps/file-service/repository/sql/file_repository.go
-[ ] apps/file-service/service/storage/
-    [ ] minio_client.go — implement StorageClient (presign upload/download, delete)
-    [ ] Demo: MinIO thay thế S3 (compatible API)
-[ ] apps/file-service/use-case/presign_upload/presign_upload.go
-    [ ] Generate presigned PUT URL (15min TTL)
-    [ ] Create file record với status=pending
-[ ] apps/file-service/use-case/confirm_upload/confirm_upload.go
-    [ ] Verify file tồn tại trên MinIO
-    [ ] Update status=active, lưu size_bytes thực tế
-    [ ] Publish file.uploaded event → audit-service consume
-[ ] apps/file-service/use-case/get_download_url/get_download_url.go
-    [ ] Check storage_tier: nếu glacier → return error "restore required"
-    [ ] Generate presigned GET URL (15min TTL)
-[ ] apps/file-service/api/grpc/controller/file_controller.go
-[ ] apps/file-service/main.go
-[ ] gw-gateway: thêm /files/* routes
-[ ] docker-compose: thêm minio service + file-service
+[x] proto/file_service/v1/file.proto
+    [x] PresignUpload(PresignUploadRequest) → PresignUploadResponse { upload_url, file_id }
+    [x] ConfirmUpload(ConfirmUploadRequest) → File
+    [x] GetDownloadURL(GetDownloadURLRequest) → { download_url }
+    [x] ListFiles(ListFilesRequest) → FilesResponse
+    [x] DeleteFile(DeleteFileRequest) → Empty
+[x] apps/file-service/bootstrap/ (config, DB, gRPC server)
+[x] apps/file-service/entity/model/file.go
+    [x] fields: id, company_id, project_id, task_id, uploaded_by
+    [x] s3_key, s3_bucket, size_bytes, mime_type
+    [x] storage_tier: standard | standard_ia | glacier
+    [x] status: pending | active | deleted
+[x] apps/file-service/domain/file_repository.go + storage_client.go
+[x] apps/file-service/repository/sql/file_repository.go
+[x] apps/file-service/service/storage/
+    [x] minio_client.go — implement StorageClient (presign upload/download, delete)
+    [x] Demo: MinIO thay thế S3 (compatible API)
+[x] apps/file-service/use-case/presign_upload/presign_upload.go
+    [x] Generate presigned PUT URL (15min TTL)
+    [x] Create file record với status=pending
+[x] apps/file-service/use-case/confirm_upload/confirm_upload.go
+    [x] Verify file tồn tại trên MinIO
+    [x] Update status=active, lưu size_bytes thực tế
+    [x] Publish file.uploaded event → audit-service consume
+[x] apps/file-service/use-case/get_download_url/get_download_url.go
+    [x] Check storage_tier: nếu glacier → return error "restore required"
+    [x] Generate presigned GET URL (15min TTL)
+[x] apps/file-service/api/grpc/controller/file_controller.go
+[x] apps/file-service/main.go
+[x] gw-gateway: thêm /files/* routes
+[x] docker-compose: thêm minio service + file-service
 ```
 
 **S3 Storage Tiers — Design:**
@@ -536,34 +536,34 @@ AWS S3: dùng lifecycle policies thật
 **Use case:** Manager request báo cáo tiến độ tuần → async generate PDF → notify khi xong.
 
 ```
-[ ] proto/report_service/v1/report.proto
-    [ ] RequestReport(RequestReportRequest) → { job_id, status: "queued" } (202)
-    [ ] GetReportStatus(GetReportStatusRequest) → ReportJob { status, download_url? }
-    [ ] ListReports(ListReportsRequest) → ReportsResponse
-[ ] apps/report-service/bootstrap/
-[ ] apps/report-service/entity/model/report_job.go
-    [ ] fields: id, company_id, requested_by, type, params (JSONB)
-    [ ] status: queued | processing | ready | failed
-    [ ] s3_key, error_msg, created_at, completed_at
-[ ] apps/report-service/domain/
-[ ] apps/report-service/repository/sql/report_repository.go
-[ ] apps/report-service/use-case/request_report/request_report.go
-    [ ] Save job record (status=queued)
-    [ ] Publish report.requested event → RabbitMQ
-[ ] apps/report-service/use-case/generate_report/generate_report.go
-    [ ] Query aggregation data (task completion stats)
-    [ ] Demo: generate JSON summary (thay PDF)
-    [ ] Upload result to MinIO
-    [ ] Update job status=ready, set s3_key
-    [ ] Publish report.completed → notification-service
-[ ] apps/report-service/consumer/report_requested_consumer.go
-    [ ] Consume report.requested queue
-    [ ] Call generate_report use case
-    [ ] Retry 3x với backoff
-[ ] apps/report-service/api/grpc/controller/report_controller.go
-[ ] apps/report-service/main.go
-[ ] gw-gateway: thêm /reports/* routes
-[ ] docker-compose: thêm report-service
+[x] proto/report_service/v1/report.proto
+    [x] RequestReport(RequestReportRequest) → { job_id, status: "queued" } (202)
+    [x] GetReportStatus(GetReportStatusRequest) → ReportJob { status, download_url? }
+    [x] ListReports(ListReportsRequest) → ReportsResponse
+[x] apps/report-service/bootstrap/
+[x] apps/report-service/entity/model/report_job.go
+    [x] fields: id, company_id, requested_by, type, params (JSONB)
+    [x] status: queued | processing | ready | failed
+    [x] s3_key, error_msg, created_at, completed_at
+[x] apps/report-service/domain/
+[x] apps/report-service/repository/sql/report_repository.go
+[x] apps/report-service/use-case/request_report/request_report.go
+    [x] Save job record (status=queued)
+    [x] Publish report.requested event → RabbitMQ
+[x] apps/report-service/use-case/generate_report/generate_report.go
+    [x] Query aggregation data (task completion stats)
+    [x] Demo: generate JSON summary (thay PDF)
+    [x] Upload result to MinIO
+    [x] Update job status=ready, set s3_key
+    [x] Publish report.completed → notification-service
+[x] apps/report-service/consumer/report_requested_consumer.go
+    [x] Consume report.requested queue
+    [x] Call generate_report use case
+    [x] Retry 3x với backoff
+[x] apps/report-service/api/grpc/controller/report_controller.go
+[x] apps/report-service/main.go
+[x] gw-gateway: thêm /reports/* routes
+[x] docker-compose: thêm report-service
 ```
 
 **Expected output:** POST /reports/generate → job_id → poll status → GET download URL
