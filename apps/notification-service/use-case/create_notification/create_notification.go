@@ -43,7 +43,11 @@ func (uc *UseCase) Execute(ctx context.Context, input CreateNotificationInput) e
 	// Idempotency check — SET NX with 24h TTL
 	// If the key already exists, this event was already processed → skip.
 	idempotencyKey := fmt.Sprintf("event:%s", input.EventID)
-	set, err := uc.redis.SetNX(ctx, idempotencyKey, 1, idempotencyTTL).Result()
+	val, err := uc.redis.SetArgs(ctx, idempotencyKey, 1, redis.SetArgs{
+		Mode: "NX",
+		TTL:  idempotencyTTL,
+	}).Result()
+	set := val == "OK"
 	if err != nil {
 		// Redis unavailable — proceed anyway (risk of duplicate, acceptable tradeoff)
 		// In production: use DB-level unique constraint on event_id instead.

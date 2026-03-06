@@ -69,20 +69,20 @@ func (c *TaskStatusChangedConsumer) processMessage(ctx context.Context, msg amqp
 	var env eventEnvelope
 	if err := json.Unmarshal(msg.Body, &env); err != nil {
 		c.logger.Error("malformed message body", zap.Error(err))
-		msg.Nack(false, false)
+		_ = msg.Nack(false, false)
 		return
 	}
 
 	var payload taskStatusChangedPayload
 	if err := json.Unmarshal(env.Payload, &payload); err != nil {
 		c.logger.Error("malformed task.status_changed payload", zap.String("event_id", env.EventID), zap.Error(err))
-		msg.Nack(false, false)
+		_ = msg.Nack(false, false)
 		return
 	}
 
 	// Only create notification if there is an assignee to notify
 	if payload.UserID == "" {
-		msg.Ack(false)
+		_ = msg.Ack(false)
 		return
 	}
 
@@ -100,7 +100,7 @@ func (c *TaskStatusChangedConsumer) processMessage(ctx context.Context, msg amqp
 
 	if err == common.ErrDuplicateEvent {
 		c.logger.Info("duplicate event skipped", zap.String("event_id", env.EventID))
-		msg.Ack(false)
+		_ = msg.Ack(false)
 		return
 	}
 
@@ -111,14 +111,14 @@ func (c *TaskStatusChangedConsumer) processMessage(ctx context.Context, msg amqp
 			zap.Error(err),
 		)
 		if retryCount >= bootstrap.MaxRetries {
-			msg.Nack(false, false)
+			_ = msg.Nack(false, false)
 		} else {
 			time.Sleep(time.Duration(1<<retryCount) * time.Second)
-			msg.Nack(false, true)
+			_ = msg.Nack(false, true)
 		}
 		return
 	}
 
-	msg.Ack(false)
+	_ = msg.Ack(false)
 	c.logger.Info("task.status_changed processed", zap.String("event_id", env.EventID))
 }

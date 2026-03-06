@@ -21,7 +21,11 @@ func NewRedisLockClient(client *redis.Client) domain.LockClient {
 }
 
 func (r *redisLockClient) SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) (bool, error) {
-	return r.client.SetNX(ctx, key, value, expiration).Result()
+	val, err := r.client.SetArgs(ctx, key, value, redis.SetArgs{
+		Mode: "NX",
+		TTL:  expiration,
+	}).Result()
+	return val == "OK", err
 }
 
 func (r *redisLockClient) Del(ctx context.Context, keys ...string) error {

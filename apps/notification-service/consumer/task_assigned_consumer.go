@@ -76,14 +76,14 @@ func (c *TaskAssignedConsumer) processMessage(ctx context.Context, msg amqp.Deli
 	var env eventEnvelope
 	if err := json.Unmarshal(msg.Body, &env); err != nil {
 		c.logger.Error("malformed message body — sending to DLQ", zap.Error(err))
-		msg.Nack(false, false) // requeue=false → routes to DLQ
+		_ = msg.Nack(false, false) // requeue=false → routes to DLQ
 		return
 	}
 
 	var payload taskAssignedPayload
 	if err := json.Unmarshal(env.Payload, &payload); err != nil {
 		c.logger.Error("malformed task.assigned payload", zap.String("event_id", env.EventID), zap.Error(err))
-		msg.Nack(false, false)
+		_ = msg.Nack(false, false)
 		return
 	}
 
@@ -101,7 +101,7 @@ func (c *TaskAssignedConsumer) processMessage(ctx context.Context, msg amqp.Deli
 
 	if err == common.ErrDuplicateEvent {
 		c.logger.Info("duplicate event skipped", zap.String("event_id", env.EventID))
-		msg.Ack(false)
+		_ = msg.Ack(false)
 		return
 	}
 
@@ -113,16 +113,16 @@ func (c *TaskAssignedConsumer) processMessage(ctx context.Context, msg amqp.Deli
 		)
 		if retryCount >= bootstrap.MaxRetries {
 			c.logger.Error("max retries exceeded — sending to DLQ", zap.String("event_id", env.EventID))
-			msg.Nack(false, false) // DLQ
+			_ = msg.Nack(false, false) // DLQ
 		} else {
 			// Exponential backoff: 1s, 2s, 4s
 			time.Sleep(time.Duration(1<<retryCount) * time.Second)
-			msg.Nack(false, true) // requeue=true for retry
+			_ = msg.Nack(false, true) // requeue=true for retry
 		}
 		return
 	}
 
-	msg.Ack(false)
+	_ = msg.Ack(false)
 	c.logger.Info("task.assigned processed", zap.String("event_id", env.EventID))
 }
 
