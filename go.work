@@ -7,5 +7,8 @@ use (
 	./apps/user-service
 	./apps/file-service
 	./apps/report-service
+	./apps/audit-service
+	./apps/search-service
+	./apps/scheduler-service
 	./gen/go
 )

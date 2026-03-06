@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package audit_service.v1;
+
+option go_package = "github.com/hodynguyen/construct-flow/gen/go/proto/audit_service/v1;audit_servicev1";
+
+import "google/protobuf/timestamp.proto";
+
+service AuditService {
+  rpc QueryAuditLogs(QueryAuditLogsRequest) returns (QueryAuditLogsResponse);
+}
+
+message AuditLog {
+  string id            = 1;
+  string company_id    = 2;
+  string user_id       = 3;
+  string action        = 4;  // task.assigned | task.status_changed | file.uploaded | user.login
+  string resource      = 5;  // task | file | user
+  string resource_id   = 6;
+  string before_state  = 7;  // JSON snapshot
+  string after_state   = 8;  // JSON snapshot
+  string ip_address    = 9;
+  google.protobuf.Timestamp occurred_at = 10;
+}
+
+message QueryAuditLogsRequest {
+  string company_id   = 1;
+  string resource     = 2;  // optional filter
+  string resource_id  = 3;  // optional filter
+  string user_id      = 4;  // optional filter
+  string action       = 5;  // optional filter
+  google.protobuf.Timestamp from = 6;
+  google.protobuf.Timestamp to   = 7;
+  int32 page      = 8;
+  int32 page_size = 9;
+}
+
+message QueryAuditLogsResponse {
+  repeated AuditLog logs = 1;
+  int32 total            = 2;
+}

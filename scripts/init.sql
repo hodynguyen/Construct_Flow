@@ -100,3 +100,75 @@ CREATE TABLE IF NOT EXISTS notifications (
 CREATE INDEX idx_notifications_user_unread ON notifications(user_id, is_read) WHERE is_read = FALSE;
 -- "Get my notification history" — paginated, descending
 CREATE INDEX idx_notifications_user_time   ON notifications(user_id, created_at DESC);
+
+-- ── audit_logs ─────────────────────────────────────────────────────────────────
+-- Append-only compliance log. Range-partitioned by occurred_at (monthly).
+-- 7-year retention enforced at partition level (drop old partitions).
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id           UUID        NOT NULL DEFAULT gen_random_uuid(),
+    company_id   UUID        NOT NULL,
+    user_id      UUID        NOT NULL,
+    action       VARCHAR(100) NOT NULL,  -- task.assigned | file.uploaded | user.login
+    resource     VARCHAR(50)  NOT NULL,  -- task | file | user | report
+    resource_id  UUID        NOT NULL,
+    before_state JSONB,
+    after_state  JSONB,
+    ip_address   VARCHAR(45),
+    occurred_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+) PARTITION BY RANGE (occurred_at);
+
+-- Monthly partitions for 2026 (auto-create script would handle future months)
+CREATE TABLE IF NOT EXISTS audit_logs_2026_01 PARTITION OF audit_logs
+    FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');
+CREATE TABLE IF NOT EXISTS audit_logs_2026_02 PARTITION OF audit_logs
+    FOR VALUES FROM ('2026-02-01') TO ('2026-03-01');
+CREATE TABLE IF NOT EXISTS audit_logs_2026_03 PARTITION OF audit_logs
+    FOR VALUES FROM ('2026-03-01') TO ('2026-04-01');
+CREATE TABLE IF NOT EXISTS audit_logs_2026_04 PARTITION OF audit_logs
+    FOR VALUES FROM ('2026-04-01') TO ('2026-05-01');
+CREATE TABLE IF NOT EXISTS audit_logs_2026_12 PARTITION OF audit_logs
+    FOR VALUES FROM ('2026-12-01') TO ('2027-01-01');
+
+-- Indexes on each partition are inherited automatically in PG16
+CREATE INDEX IF NOT EXISTS idx_audit_company_resource ON audit_logs(company_id, resource, resource_id);
+CREATE INDEX IF NOT EXISTS idx_audit_company_time     ON audit_logs(company_id, occurred_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_company_user     ON audit_logs(company_id, user_id);
+
+-- ── files ──────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS files (
+    id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id   UUID        NOT NULL,
+    project_id   UUID,
+    task_id      UUID,
+    uploaded_by  UUID        NOT NULL,
+    name         VARCHAR(500) NOT NULL,
+    s3_key       VARCHAR(1000) NOT NULL,
+    s3_bucket    VARCHAR(100) NOT NULL,
+    size_bytes   BIGINT      NOT NULL DEFAULT 0,
+    mime_type    VARCHAR(100),
+    storage_tier VARCHAR(20)  NOT NULL DEFAULT 'standard',
+    status       VARCHAR(20)  NOT NULL DEFAULT 'pending',
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    deleted_at   TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_files_company      ON files(company_id);
+CREATE INDEX IF NOT EXISTS idx_files_task         ON files(task_id)    WHERE task_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_files_lifecycle    ON files(storage_tier, created_at) WHERE deleted_at IS NULL;
+
+-- ── report_jobs ────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS report_jobs (
+    id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id   UUID        NOT NULL,
+    requested_by UUID        NOT NULL,
+    type         VARCHAR(50)  NOT NULL,
+    params       JSONB,
+    status       VARCHAR(20)  NOT NULL DEFAULT 'queued',
+    s3_key       VARCHAR(1000),
+    download_url VARCHAR(2000),
+    error_msg    TEXT,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_report_jobs_company ON report_jobs(company_id, created_at DESC);

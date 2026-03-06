@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package scheduler_service.v1;
+
+option go_package = "github.com/hodynguyen/construct-flow/gen/go/proto/scheduler_service/v1;scheduler_servicev1";
+
+import "google/protobuf/timestamp.proto";
+
+service SchedulerService {
+  rpc ListJobs(ListJobsRequest) returns (ListJobsResponse);
+  rpc TriggerJob(TriggerJobRequest) returns (TriggerJobResponse);
+}
+
+message Job {
+  string name          = 1;
+  string schedule      = 2;   // cron expression
+  string status        = 3;   // active | disabled
+  google.protobuf.Timestamp last_run  = 4;
+  google.protobuf.Timestamp next_run  = 5;
+}
+
+message ListJobsRequest {}
+
+message ListJobsResponse {
+  repeated Job jobs = 1;
+}
+
+message TriggerJobRequest {
+  string name = 1;
+}
+
+message TriggerJobResponse {
+  bool triggered = 1;
+}

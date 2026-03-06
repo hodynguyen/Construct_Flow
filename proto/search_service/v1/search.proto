@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package search_service.v1;
+
+option go_package = "github.com/hodynguyen/construct-flow/gen/go/proto/search_service/v1;search_servicev1";
+
+service SearchService {
+  rpc Search(SearchRequest) returns (SearchResponse);
+}
+
+message SearchRequest {
+  string company_id    = 1;
+  string q             = 2;               // free-text query
+  repeated string types = 3;              // task | project | file  (empty = all)
+  int32 page      = 4;
+  int32 page_size = 5;
+}
+
+message SearchHit {
+  string id        = 1;
+  string type      = 2;   // task | project | file
+  string title     = 3;
+  string snippet   = 4;   // highlighted excerpt
+  float  score     = 5;
+}
+
+message SearchResponse {
+  repeated SearchHit hits = 1;
+  int32 total             = 2;
+}
