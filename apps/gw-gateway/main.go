@@ -1,9 +1,19 @@
+// @title           ConstructFlow API
+// @version         1.0
+// @description     Multi-tenant construction task management system.
+// @host            localhost:8080
+// @BasePath        /
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description "Bearer <JWT token>"
 package main
 
 import (
 	"fmt"
 	"log"
 
+	_ "github.com/hodynguyen/construct-flow/apps/gw-gateway/docs"
 	gwhttp "github.com/hodynguyen/construct-flow/apps/gw-gateway/api/http"
 	"github.com/hodynguyen/construct-flow/apps/gw-gateway/api/http/middleware"
 	"github.com/hodynguyen/construct-flow/apps/gw-gateway/bootstrap"

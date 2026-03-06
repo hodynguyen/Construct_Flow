@@ -1,0 +1,243 @@
+basePath: /
+definitions:
+  handler.createProjectRequest:
+    properties:
+      description:
+        type: string
+      end_date:
+        type: string
+      name:
+        type: string
+      start_date:
+        type: string
+    required:
+    - name
+    type: object
+  handler.loginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  handler.registerRequest:
+    properties:
+      company_id:
+        type: string
+      company_name:
+        type: string
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      role:
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Multi-tenant construction task management system.
+  title: ConstructFlow API
+  version: "1.0"
+paths:
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Login payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Authenticate and receive JWT
+      tags:
+      - auth
+  /api/v1/auth/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Registration payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.registerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
+      tags:
+      - auth
+  /api/v1/notifications:
+    get:
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: List notifications for the current user
+      tags:
+      - notifications
+  /api/v1/notifications/{id}/read:
+    patch:
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Mark a notification as read
+      tags:
+      - notifications
+  /api/v1/notifications/unread/count:
+    get:
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Get unread notification count
+      tags:
+      - notifications
+  /api/v1/projects:
+    get:
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: List all projects in the company
+      tags:
+      - projects
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Project payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.createProjectRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new project
+      tags:
+      - projects
+  /api/v1/projects/{id}:
+    delete:
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Delete a project
+      tags:
+      - projects
+    get:
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Get a project by ID
+      tags:
+      - projects
+    put:
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Update a project
+      tags:
+      - projects
+  /api/v1/projects/{project_id}/tasks:
+    get:
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: List tasks in a project
+      tags:
+      - tasks
+    post:
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Create a task in a project
+      tags:
+      - tasks
+  /api/v1/tasks/{id}:
+    get:
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Get a task by ID
+      tags:
+      - tasks
+  /api/v1/tasks/{id}/assign:
+    post:
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Assign a task to a worker (manager only)
+      tags:
+      - tasks
+  /api/v1/tasks/{id}/status:
+    patch:
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Update task status
+      tags:
+      - tasks
+securityDefinitions:
+  BearerAuth:
+    description: '"Bearer <JWT token>"'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

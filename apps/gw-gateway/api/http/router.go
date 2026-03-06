@@ -6,6 +6,8 @@ import (
 	"github.com/casbin/casbin/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.elastic.co/apm/module/apmgin/v2"
 
 	"github.com/hodynguyen/construct-flow/apps/gw-gateway/api/http/handler"
@@ -37,6 +39,7 @@ func NewRouter(cfg RouterConfig) (*gin.Engine, error) {
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	authMiddleware, err := middleware.AuthMiddleware(cfg.JWTPublicKeyPath)
 	if err != nil {

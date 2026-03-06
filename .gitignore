@@ -65,5 +65,5 @@ keys/
 *.log
 logs/
 
-# ── Swagger generated ─────────────────────────────────────────────────────────
-apps/*/docs/
+# ── Swagger generated — commit so Docker builds don't need swag installed
+# apps/*/docs/
