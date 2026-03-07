@@ -1,9 +1,9 @@
-FROM golang:1.23-alpine AS builder
+FROM golang:1.25-alpine AS builder
 WORKDIR /app
 
 COPY go.work go.work.sum ./
 COPY gen/go/ gen/go/
-COPY apps/user-service/ apps/user-service/
+COPY apps/ apps/
 
 WORKDIR /app/apps/user-service
 RUN go build -o /user-service .

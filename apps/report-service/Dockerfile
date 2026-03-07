@@ -1,10 +1,9 @@
-FROM golang:1.23-alpine AS builder
+FROM golang:1.25-alpine AS builder
 WORKDIR /app
 
-# Copy go.work + workspace modules needed for the build
 COPY go.work go.work.sum ./
 COPY gen/go/ gen/go/
-COPY apps/report-service/ apps/report-service/
+COPY apps/ apps/
 
 WORKDIR /app/apps/report-service
 RUN go build -o /report-service .

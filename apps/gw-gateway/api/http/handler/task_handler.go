@@ -45,7 +45,7 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 	}
 	resp, err := h.taskClient.CreateTask(c.Request.Context(), &taskv1.CreateTaskRequest{
 		CompanyId:   companyID,
-		ProjectId:   c.Param("project_id"),
+		ProjectId:   c.Param("id"),
 		CreatedBy:   userID,
 		Title:       req.Title,
 		Description: req.Description,
@@ -98,7 +98,7 @@ func (h *TaskHandler) ListTasks(c *gin.Context) {
 
 	resp, err := h.taskClient.ListTasks(c.Request.Context(), &taskv1.ListTasksRequest{
 		CompanyId:  companyID,
-		ProjectId:  c.Param("project_id"),
+		ProjectId:  c.Param("id"),
 		Status:     c.Query("status"),
 		AssignedTo: c.Query("assigned_to"),
 		Priority:   c.Query("priority"),

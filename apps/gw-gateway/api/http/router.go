@@ -74,9 +74,9 @@ func NewRouter(cfg RouterConfig) (*gin.Engine, error) {
 			projects.PUT("/:id",    middleware.RBACMiddleware(cfg.Enforcer, "/projects", "write"), projectHandler.UpdateProject)
 			projects.DELETE("/:id", middleware.RBACMiddleware(cfg.Enforcer, "/projects", "write"), projectHandler.DeleteProject)
 
-			// Tasks nested under project
-			projects.GET("/:project_id/tasks",  middleware.RBACMiddleware(cfg.Enforcer, "/tasks", "read"),  taskHandler.ListTasks)
-			projects.POST("/:project_id/tasks", middleware.RBACMiddleware(cfg.Enforcer, "/tasks", "write"), taskHandler.CreateTask)
+			// Tasks nested under project — use same :id wildcard to avoid Gin conflict
+			projects.GET("/:id/tasks",  middleware.RBACMiddleware(cfg.Enforcer, "/tasks", "read"),  taskHandler.ListTasks)
+			projects.POST("/:id/tasks", middleware.RBACMiddleware(cfg.Enforcer, "/tasks", "write"), taskHandler.CreateTask)
 		}
 
 		// Tasks (standalone access)
