@@ -49,26 +49,47 @@ services:
       timeout: 5s
       retries: 5
 
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      # FIX: mc is not bundled in minio server image — use curl instead
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   # ── Observability (optional — comment out if not needed) ──────────────────
 
+  # FIX: single elasticsearch definition using official registry (8.13 throughout)
   elasticsearch:
-    image: elasticsearch:8.12.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
     ports:
       - "9200:9200"
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
     volumes:
       - es_data:/usr/share/elasticsearch/data
     healthcheck:
-      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"'"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"'"]
       interval: 15s
       timeout: 10s
       retries: 10
+    restart: unless-stopped
 
   kibana:
-    image: kibana:8.12.0
+    image: docker.elastic.co/kibana/kibana:8.13.0
     ports:
       - "5601:5601"
     environment:
@@ -76,9 +97,10 @@ services:
     depends_on:
       elasticsearch:
         condition: service_healthy
+    restart: unless-stopped
 
   apm-server:
-    image: elastic/apm-server:8.12.0
+    image: docker.elastic.co/apm/apm-server:8.13.0
     ports:
       - "8200:8200"
     command: >
@@ -92,6 +114,7 @@ services:
     depends_on:
       elasticsearch:
         condition: service_healthy
+    restart: unless-stopped
 
   # ── Application Services ──────────────────────────────────────────────────
 
@@ -182,6 +205,8 @@ services:
       - TASK_SERVICE_ADDR=task-service:50051
       - USER_SERVICE_ADDR=user-service:50053
       - NOTIFICATION_SERVICE_ADDR=notification-service:50052
+      - FILE_SERVICE_ADDR=file-service:50054
+      - REPORT_SERVICE_ADDR=report-service:50055
       - JWT_PUBLIC_KEY_PATH=/keys/public.pem
       - CASBIN_MODEL_PATH=/casbin/model.conf
       - CASBIN_POLICY_PATH=/casbin/policy.csv
@@ -198,24 +223,8 @@ services:
         condition: service_started
     volumes:
       - ./keys:/keys:ro
-    restart: unless-stopped
-
-  minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      - MINIO_ROOT_USER=minioadmin
-      - MINIO_ROOT_PASSWORD=minioadmin
-    volumes:
-      - minio_data:/data
-    healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      # FIX: mount casbin config so gateway can load RBAC model + policy
+      - ./casbin:/casbin:ro
     restart: unless-stopped
 
   file-service:
@@ -273,23 +282,6 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-    restart: unless-stopped
-
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
-    ports:
-      - "9200:9200"
-    volumes:
-      - es_data:/usr/share/elasticsearch/data
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9200"]
-      interval: 15s
-      timeout: 10s
-      retries: 10
     restart: unless-stopped
 
   audit-service:
