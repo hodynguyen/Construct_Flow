@@ -2,18 +2,18 @@
 
 Swagger UI: **http://localhost:8080/swagger/index.html**
 
-> Test theo thứ tự từ trên xuống. Mỗi bước copy output cần thiết cho bước tiếp theo.
+> Follow the steps in order. Copy the required output from each step for the next one.
 
 ---
 
-## Setup: Authorize trên Swagger
+## Setup: Authorize on Swagger
 
-Sau khi lấy được `access_token` ở bước Login:
-1. Click nút **Authorize** (góc trên phải Swagger UI)
+After getting `access_token` from the Login step:
+1. Click the **Authorize** button (top right of Swagger UI)
 2. Paste: `Bearer <access_token>`
 3. Click **Authorize** → **Close**
 
-Tất cả request sau đó sẽ tự gắn header `Authorization`.
+All subsequent requests will automatically include the `Authorization` header.
 
 ---
 
@@ -33,7 +33,7 @@ Tất cả request sau đó sẽ tự gắn header `Authorization`.
 }
 ```
 
-Expected: `200` — user object returned, lưu lại `id` (dùng làm `assignee_id` ở bước 6).
+Expected: `201` — user object returned. Save the `id` (used as `assignee_id` in step 8).
 
 ---
 
@@ -57,7 +57,7 @@ Expected: `200`
 }
 ```
 
-Copy `access_token` → paste vào Swagger **Authorize**.
+Copy `access_token` → paste into Swagger **Authorize**.
 
 ---
 
@@ -72,7 +72,7 @@ Copy `access_token` → paste vào Swagger **Authorize**.
 }
 ```
 
-Expected: `200` — lưu lại `project.id`.
+Expected: `201` — save `project.id`.
 
 ---
 
@@ -80,13 +80,13 @@ Expected: `200` — lưu lại `project.id`.
 
 **GET** `/api/v1/projects`
 
-Expected: `200` — array có 1 project vừa tạo.
+Expected: `200` — array containing the project just created.
 
 ---
 
 ### Step 5 — Get Project by ID
 
-**GET** `/api/v1/projects/{id}` — dùng `id` từ step 3.
+**GET** `/api/v1/projects/{id}` — use `id` from step 3.
 
 Expected: `200` — project detail.
 
@@ -94,7 +94,7 @@ Expected: `200` — project detail.
 
 ### Step 6 — Create Task
 
-**POST** `/api/v1/projects/{id}/tasks` — `{id}` là project id.
+**POST** `/api/v1/projects/{id}/tasks` — `{id}` is the project id.
 
 ```json
 {
@@ -104,7 +104,7 @@ Expected: `200` — project detail.
 }
 ```
 
-Expected: `200` — `task.status` = `"todo"`, lưu lại `task.id`.
+Expected: `201` — `task.status` = `"todo"`. Save `task.id`.
 
 ---
 
@@ -112,23 +112,23 @@ Expected: `200` — `task.status` = `"todo"`, lưu lại `task.id`.
 
 **GET** `/api/v1/projects/{id}/tasks`
 
-Expected: `200` — array có 1 task, status `todo`.
+Expected: `200` — array with 1 task, status `todo`.
 
 ---
 
 ### Step 8 — Assign Task
 
-**POST** `/api/v1/tasks/{id}/assign` — `{id}` là task id.
+**POST** `/api/v1/tasks/{id}/assign` — `{id}` is the task id.
 
 ```json
 {
-  "assigned_to": "<user_id từ step 1>"
+  "assigned_to": "<user_id from step 1>"
 }
 ```
 
 Expected: `200` — `task.assigned_to` = user id.
 
-> Trigger: RabbitMQ publishes `task.assigned` event → notification-service tạo notification.
+> Trigger: RabbitMQ publishes `task.assigned` event → notification-service creates a notification.
 
 ---
 
@@ -136,7 +136,7 @@ Expected: `200` — `task.assigned_to` = user id.
 
 **GET** `/api/v1/notifications`
 
-Expected: `200` — có 1 notification type `task_assigned`.
+Expected: `200` — 1 notification with type `task_assigned`.
 
 ---
 
@@ -178,7 +178,7 @@ Expected: `200` — `task.status` = `"done"`.
 
 ### Step 13 — Mark Notification as Read
 
-**PATCH** `/api/v1/notifications/{id}/read` — `{id}` là notification id từ step 9.
+**PATCH** `/api/v1/notifications/{id}/read` — `{id}` is the notification id from step 9.
 
 Expected: `200`.
 
@@ -200,25 +200,25 @@ Expected: `200`
 
 ### Test 2a — `todo` → `done` (invalid, must go through `in_progress`)
 
-**PATCH** `/api/v1/tasks/{id}/status` (dùng task mới, status = `todo`)
+**PATCH** `/api/v1/tasks/{id}/status` (use a new task with status = `todo`)
 
 ```json
 { "status": "done" }
 ```
 
-Expected: `400` hoặc `422` — error message về invalid transition.
+Expected: `400` — error message about invalid transition.
 
 ---
 
 ### Test 2b — `done` → `todo` (invalid)
 
-**PATCH** `/api/v1/tasks/{id}/status` (task đang `done`)
+**PATCH** `/api/v1/tasks/{id}/status` (task currently `done`)
 
 ```json
 { "status": "todo" }
 ```
 
-Expected: `400` — không cho phép.
+Expected: `400` — not allowed.
 
 ---
 
@@ -248,7 +248,7 @@ Expected: `200`.
 
 ## Scenario 3 — RBAC: Permission Denied
 
-Đăng ký thêm user role `worker`:
+Register a user with `worker` role:
 
 **POST** `/api/v1/auth/register`
 
@@ -262,7 +262,7 @@ Expected: `200`.
 }
 ```
 
-Login bằng worker, Authorize lại trên Swagger.
+Login as worker, re-authorize on Swagger.
 
 ### Test 3a — Worker cannot assign task
 
@@ -296,7 +296,7 @@ Expected: `401 Unauthorized`.
 
 ## Scenario 5 — Rate Limiting
 
-Gửi liên tục **> 60 requests/minute** vào bất kỳ endpoint nào (dùng Swagger click nhiều lần hoặc terminal loop).
+Send more than 60 requests per minute to any endpoint:
 
 ```bash
 for i in $(seq 1 70); do
@@ -304,7 +304,7 @@ for i in $(seq 1 70); do
 done
 ```
 
-Expected: Sau ~60 requests → `429 Too Many Requests`.
+Expected: After ~60 requests → `429 Too Many Requests`.
 
 ---
 

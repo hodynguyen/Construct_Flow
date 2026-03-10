@@ -1,5 +1,12 @@
 basePath: /
 definitions:
+  handler.assignTaskRequest:
+    properties:
+      assigned_to:
+        type: string
+    required:
+    - assigned_to
+    type: object
   handler.createProjectRequest:
     properties:
       description:
@@ -12,6 +19,21 @@ definitions:
         type: string
     required:
     - name
+    type: object
+  handler.createTaskRequest:
+    properties:
+      assigned_to:
+        type: string
+      description:
+        type: string
+      due_date:
+        type: string
+      priority:
+        type: string
+      title:
+        type: string
+    required:
+    - title
     type: object
   handler.loginRequest:
     properties:
@@ -42,6 +64,24 @@ definitions:
     - email
     - name
     - password
+    type: object
+  handler.updateProjectRequest:
+    properties:
+      description:
+        type: string
+      end_date:
+        type: string
+      name:
+        type: string
+      status:
+        type: string
+    type: object
+  handler.updateStatusRequest:
+    properties:
+      status:
+        type: string
+    required:
+    - status
     type: object
 host: localhost:8080
 info:
@@ -120,7 +160,35 @@ paths:
       - auth
   /api/v1/notifications:
     get:
-      responses: {}
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      - description: Only unread notifications
+        in: query
+        name: unread_only
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       security:
       - BearerAuth: []
       summary: List notifications for the current user
@@ -128,7 +196,27 @@ paths:
       - notifications
   /api/v1/notifications/{id}/read:
     patch:
-      responses: {}
+      parameters:
+      - description: Notification ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       security:
       - BearerAuth: []
       summary: Mark a notification as read
@@ -136,7 +224,20 @@ paths:
       - notifications
   /api/v1/notifications/unread/count:
     get:
-      responses: {}
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       security:
       - BearerAuth: []
       summary: Get unread notification count
@@ -144,7 +245,35 @@ paths:
       - notifications
   /api/v1/projects:
     get:
-      responses: {}
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       security:
       - BearerAuth: []
       summary: List all projects in the company
@@ -175,21 +304,117 @@ paths:
       - projects
   /api/v1/projects/{id}:
     delete:
-      responses: {}
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       security:
       - BearerAuth: []
       summary: Delete a project
       tags:
       - projects
     get:
-      responses: {}
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       security:
       - BearerAuth: []
       summary: Get a project by ID
       tags:
       - projects
     put:
-      responses: {}
+      consumes:
+      - application/json
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.updateProjectRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       security:
       - BearerAuth: []
       summary: Update a project
@@ -197,14 +422,94 @@ paths:
       - projects
   /api/v1/projects/{project_id}/tasks:
     get:
-      responses: {}
+      parameters:
+      - description: Project ID
+        in: path
+        name: project_id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      - description: Filter by assignee
+        in: query
+        name: assigned_to
+        type: string
+      - description: Filter by priority
+        in: query
+        name: priority
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       security:
       - BearerAuth: []
       summary: List tasks in a project
       tags:
       - tasks
     post:
-      responses: {}
+      consumes:
+      - application/json
+      parameters:
+      - description: Project ID
+        in: path
+        name: project_id
+        required: true
+        type: string
+      - description: Task payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.createTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       security:
       - BearerAuth: []
       summary: Create a task in a project
@@ -212,7 +517,32 @@ paths:
       - tasks
   /api/v1/tasks/{id}:
     get:
-      responses: {}
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       security:
       - BearerAuth: []
       summary: Get a task by ID
@@ -220,7 +550,52 @@ paths:
       - tasks
   /api/v1/tasks/{id}/assign:
     post:
-      responses: {}
+      consumes:
+      - application/json
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Assignment payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.assignTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       security:
       - BearerAuth: []
       summary: Assign a task to a worker (manager only)
@@ -228,7 +603,46 @@ paths:
       - tasks
   /api/v1/tasks/{id}/status:
     patch:
-      responses: {}
+      consumes:
+      - application/json
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Status payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.updateStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       security:
       - BearerAuth: []
       summary: Update task status

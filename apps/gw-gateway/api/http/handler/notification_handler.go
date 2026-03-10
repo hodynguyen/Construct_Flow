@@ -23,6 +23,12 @@ func NewNotificationHandler(notifClient notifv1.NotificationServiceClient) *Noti
 // @Summary List notifications for the current user
 // @Tags notifications
 // @Security BearerAuth
+// @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Page size" default(20)
+// @Param unread_only query bool false "Only unread notifications"
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]string
 // @Router /api/v1/notifications [get]
 func (h *NotificationHandler) GetNotifications(c *gin.Context) {
 	userID, companyID, _, err := middleware.GetClaims(c)
@@ -57,6 +63,9 @@ func (h *NotificationHandler) GetNotifications(c *gin.Context) {
 // @Summary Get unread notification count
 // @Tags notifications
 // @Security BearerAuth
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]string
 // @Router /api/v1/notifications/unread/count [get]
 func (h *NotificationHandler) GetUnreadCount(c *gin.Context) {
 	userID, companyID, _, err := middleware.GetClaims(c)
@@ -79,6 +88,9 @@ func (h *NotificationHandler) GetUnreadCount(c *gin.Context) {
 // @Summary Mark a notification as read
 // @Tags notifications
 // @Security BearerAuth
+// @Param id path string true "Notification ID"
+// @Success 204
+// @Failure 401,404 {object} map[string]string
 // @Router /api/v1/notifications/{id}/read [patch]
 func (h *NotificationHandler) MarkAsRead(c *gin.Context) {
 	userID, companyID, _, err := middleware.GetClaims(c)

@@ -31,6 +31,12 @@ type createTaskRequest struct {
 // @Summary Create a task in a project
 // @Tags tasks
 // @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param project_id path string true "Project ID"
+// @Param body body createTaskRequest true "Task payload"
+// @Success 201 {object} map[string]interface{}
+// @Failure 400,401,403 {object} map[string]string
 // @Router /api/v1/projects/{project_id}/tasks [post]
 func (h *TaskHandler) CreateTask(c *gin.Context) {
 	userID, companyID, _, err := middleware.GetClaims(c)
@@ -64,6 +70,10 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 // @Summary Get a task by ID
 // @Tags tasks
 // @Security BearerAuth
+// @Produce json
+// @Param id path string true "Task ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 401,404 {object} map[string]string
 // @Router /api/v1/tasks/{id} [get]
 func (h *TaskHandler) GetTask(c *gin.Context) {
 	_, companyID, _, err := middleware.GetClaims(c)
@@ -86,6 +96,15 @@ func (h *TaskHandler) GetTask(c *gin.Context) {
 // @Summary List tasks in a project
 // @Tags tasks
 // @Security BearerAuth
+// @Produce json
+// @Param project_id path string true "Project ID"
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Page size" default(20)
+// @Param status query string false "Filter by status"
+// @Param assigned_to query string false "Filter by assignee"
+// @Param priority query string false "Filter by priority"
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]string
 // @Router /api/v1/projects/{project_id}/tasks [get]
 func (h *TaskHandler) ListTasks(c *gin.Context) {
 	_, companyID, _, err := middleware.GetClaims(c)
@@ -125,6 +144,12 @@ type assignTaskRequest struct {
 // @Summary Assign a task to a worker (manager only)
 // @Tags tasks
 // @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path string true "Task ID"
+// @Param body body assignTaskRequest true "Assignment payload"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400,401,403,409 {object} map[string]string
 // @Router /api/v1/tasks/{id}/assign [post]
 func (h *TaskHandler) AssignTask(c *gin.Context) {
 	userID, companyID, _, err := middleware.GetClaims(c)
@@ -158,6 +183,12 @@ type updateStatusRequest struct {
 // @Summary Update task status
 // @Tags tasks
 // @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path string true "Task ID"
+// @Param body body updateStatusRequest true "Status payload"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400,401,403 {object} map[string]string
 // @Router /api/v1/tasks/{id}/status [patch]
 func (h *TaskHandler) UpdateTaskStatus(c *gin.Context) {
 	userID, companyID, role, err := middleware.GetClaims(c)

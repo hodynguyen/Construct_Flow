@@ -20,9 +20,11 @@ p, manager, *, /tasks,         write
 p, manager, *, /tasks/assign,  write
 p, manager, *, /tasks/status,  write
 p, manager, *, /notifications, read
+p, manager, *, /notifications, write
 
 # ── Worker: read projects, read/update own tasks, no assignment ───────────────
 p, worker, *, /projects,       read
 p, worker, *, /tasks,          read
 p, worker, *, /tasks/status,   write
 p, worker, *, /notifications,  read
+p, worker, *, /notifications,  write

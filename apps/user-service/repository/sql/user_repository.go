@@ -54,10 +54,10 @@ func (r *userRepository) FindByEmail(ctx context.Context, email string) (*model.
 	return &user, nil
 }
 
-func (r *userRepository) ExistsByEmail(ctx context.Context, email, companyID string) (bool, error) {
+func (r *userRepository) ExistsByEmail(ctx context.Context, email, _ string) (bool, error) {
 	var count int64
 	err := r.db.WithContext(ctx).Model(&model.User{}).
-		Where("email = ? AND company_id = ?", email, companyID).
+		Where("email = ?", email).
 		Count(&count).Error
 	if err != nil {
 		return false, err

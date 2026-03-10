@@ -65,6 +65,10 @@ func (h *ProjectHandler) CreateProject(c *gin.Context) {
 // @Summary Get a project by ID
 // @Tags projects
 // @Security BearerAuth
+// @Produce json
+// @Param id path string true "Project ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 401,404 {object} map[string]string
 // @Router /api/v1/projects/{id} [get]
 func (h *ProjectHandler) GetProject(c *gin.Context) {
 	_, companyID, _, err := middleware.GetClaims(c)
@@ -87,6 +91,12 @@ func (h *ProjectHandler) GetProject(c *gin.Context) {
 // @Summary List all projects in the company
 // @Tags projects
 // @Security BearerAuth
+// @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Page size" default(20)
+// @Param status query string false "Filter by status"
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]string
 // @Router /api/v1/projects [get]
 func (h *ProjectHandler) ListProjects(c *gin.Context) {
 	_, companyID, _, err := middleware.GetClaims(c)
@@ -126,6 +136,12 @@ type updateProjectRequest struct {
 // @Summary Update a project
 // @Tags projects
 // @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path string true "Project ID"
+// @Param body body updateProjectRequest true "Update payload"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400,401,403,404 {object} map[string]string
 // @Router /api/v1/projects/{id} [put]
 func (h *ProjectHandler) UpdateProject(c *gin.Context) {
 	_, companyID, _, err := middleware.GetClaims(c)
@@ -157,6 +173,9 @@ func (h *ProjectHandler) UpdateProject(c *gin.Context) {
 // @Summary Delete a project
 // @Tags projects
 // @Security BearerAuth
+// @Param id path string true "Project ID"
+// @Success 204
+// @Failure 401,403,404 {object} map[string]string
 // @Router /api/v1/projects/{id} [delete]
 func (h *ProjectHandler) DeleteProject(c *gin.Context) {
 	_, companyID, _, err := middleware.GetClaims(c)
